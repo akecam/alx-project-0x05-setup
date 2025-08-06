@@ -26,8 +26,12 @@ const Home: React.FC = () => {
     }
 
     const data = await resp.json();
-    setImageUrl(data.message);
-    setGeneratedImages([...generatedImages, data]);
+    setImageUrl(data?.message);
+    // setGeneratedImages([...generatedImages, data]);
+    setGeneratedImages((prev) => [
+      ...prev,
+      { imageUrl: data?.message, prompt },
+    ]);
     setIsLoading(false);
   };
 
