@@ -1,39 +1,25 @@
 import ImageCard from "@/components/common/ImageCard";
+import useFetchData from "@/hooks/useFetchData";
 import { ImageProps } from "@/interfaces";
-import { useState } from "react";
+import React, { use, useEffect, useState } from "react";
 
 const Home: React.FC = () => {
   const [prompt, setPrompt] = useState<string>("");
   const [imageUrl, setImageUrl] = useState<string>("");
-  const [generatedImages, setGeneratedImages] = useState<ImageProps[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { isLoading, responseData, generatedImages, fetchData } = useFetchData<
+    any,
+    { prompt: string }
+  >();
 
   const handleGenerateImage = async () => {
-    setIsLoading(true);
-    const resp = await fetch("/api/generate-image", {
-      method: "POST",
-      body: JSON.stringify({
-        prompt,
-      }),
-      headers: {
-        "Content-type": "application/json",
-      },
-    });
-
-    if (!resp.ok) {
-      setIsLoading(false);
-      return;
-    }
-
-    const data = await resp.json();
-    setImageUrl(data?.message);
-    // setGeneratedImages([...generatedImages, data]);
-    setGeneratedImages((prev) => [
-      ...prev,
-      { imageUrl: data?.message, prompt },
-    ]);
-    setIsLoading(false);
+    fetchData("/api/generate-image", { prompt });
   };
+
+  useEffect(() => {
+    if (!isLoading) {
+      setImageUrl(responseData?.message);
+    }
+  }, [isLoading]);
 
   return (
     <div className="flex flex-col items-center min-h-screen bg-gray-500 p-4">
@@ -59,7 +45,7 @@ const Home: React.FC = () => {
           </button>
         </div>
 
-        {imageUrl && (
+        {responseData?.message && (
           <ImageCard
             action={() => setImageUrl(imageUrl)}
             imageUrl={imageUrl}
@@ -67,6 +53,25 @@ const Home: React.FC = () => {
           />
         )}
       </div>
+      {generatedImages.length ? (
+        <div>
+          <h3 className="text-xl text-center mb-4">Generated Images</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 border max-w-full md:max-w-[100px] p-2 overflow-y-scroll h-96">
+            {generatedImages?.map(({ imageUrl, prompt }: ImageProps, index) => (
+              <ImageCard
+                action={() => setImageUrl(imageUrl)}
+                imageUrl={imageUrl}
+                prompt={prompt}
+                key={index}
+                width="w-full"
+                height="h-40"
+              />
+            ))}
+          </div>
+        </div>
+      ) : (
+        ""
+      )}
     </div>
   );
 };
